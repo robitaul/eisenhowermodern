@@ -190,23 +190,25 @@
         }
 
         function exportToJSON() {
-            // Remove ephemeral UI states before exporting
             const cleanState = { ...state };
             delete cleanState.draggedTaskId;
             delete cleanState.editingId;
             delete cleanState.datePickingId;
             delete cleanState.showClearModal;
 
-            const dataStr = JSON.stringify(cleanState, null, 2);
-            const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+            const blob = new Blob([JSON.stringify(cleanState, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
             const exportFileDefaultName = `eisenhower-matrix-${new Date().toISOString().split('T')[0]}.json`;
             
             const linkElement = document.createElement('a');
-            linkElement.setAttribute('href', dataUri);
-            linkElement.setAttribute('download', exportFileDefaultName);
-            document.body.appendChild(linkElement); // Required for some browsers
+            linkElement.href = url;
+            linkElement.download = exportFileDefaultName;
+            document.body.appendChild(linkElement);
             linkElement.click();
+            
+            // Clean up
             document.body.removeChild(linkElement);
+            URL.revokeObjectURL(url);
         }
 
         function importFromJSON(file) {
@@ -427,7 +429,6 @@
         }
 
         function setupEventListeners() {
-            // Document-level listener for header and dynamic buttons
             document.addEventListener('click', (e) => {
                 const btn = e.target.closest('button') || e.target.closest('[data-action]');
                 if (!btn) return;
@@ -489,7 +490,6 @@
                 if (e.target.files.length) importFromJSON(e.target.files[0]);
             });
 
-            // Handle Input/Text Changes
             document.addEventListener('input', (e) => {
                 if (e.target.id === 'notes-area') {
                     state.notes = e.target.value;
@@ -536,7 +536,6 @@
                 }
             });
 
-            // Drag/Drop logic
             document.addEventListener('dragstart', (e) => {
                 const taskEl = e.target.closest('[draggable="true"]');
                 if (taskEl) {
